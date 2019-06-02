@@ -4,7 +4,7 @@ require('./db/mongoose');
 const User = require('./models/user');
 
 const auth = require('./middlewares/auth');
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3001; 
 const app = express();
 
 app.use(express.json());
