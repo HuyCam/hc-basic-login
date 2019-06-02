@@ -4,10 +4,16 @@ require('./db/mongoose');
 const User = require('./models/user');
 
 const auth = require('./middlewares/auth');
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const app = express();
 
 app.use(express.json());
+
+// API live
+app.get('/', (req, res) => {
+    res.send('server is live');
+})
+
 
 // get your profile
 app.get('/users/me', auth, (req ,res) => {
