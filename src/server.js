@@ -1,6 +1,7 @@
 const express = require('express');
 require('./db/mongoose');
 const cors = require('cors');
+const multer = require('multer');
 const User = require('./models/user');
 
 const auth = require('./middlewares/auth');
@@ -9,6 +10,20 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+// set up image upload
+const upload = multer({
+    limits: {
+        fileSize: 400000
+    },
+    filter (req, file, cb) {
+        if (!file.originalname.match(/(jpg|jpeg|png)/i)) {
+            return cb(new Error('Please upload a file image'))
+        }
+
+        cb(undefined, true);
+    }
+})
 
 // API live
 app.get('/', (req, res) => {
@@ -75,6 +90,37 @@ app.post('/users/logout-all', auth, async (req, res) => {
     }
 })
 
+app.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) => {
+    try {
+        req.user.avatar = req.file.buffer;
+        await req.user.save();
+        res.send('Image has been upload')
+    } catch(e) {
+        res.status(400).send();
+    }
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message })
+})
+
+app.get('/users/me/avatar', auth, async (req, res) => {
+    try {
+        res.set('Content-Type', 'image/png');
+        res.send(req.user.avatar);
+    } catch(e) {
+        res.status(500).send();
+    }
+})
+
+app.delete('/users/me/avatar', auth, async (req, res) => {
+    try {
+        req.user.avatar = undefined;
+        await req.user.save();
+
+        res.send({msg: 'Delete user avatar successfully'})
+    } catch(e) {
+
+    }
+})
 app.listen(port, () => {
     console.log(`Server is live at port ${port}`);
 });

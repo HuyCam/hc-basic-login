@@ -30,7 +30,10 @@ const userSchema = mongoose.Schema({
             type: String,
             required: true
         }
-    }]
+    }],
+    avatar: {
+        type: Buffer
+    }
 });
 
 userSchema.methods.generateToken = async function() {
