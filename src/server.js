@@ -112,12 +112,15 @@ app.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) =>
     res.status(400).send({ error: error.message })
 })
 
-app.get('/users/me/avatar', auth, async (req, res) => {
+app.get('/users/:id/avatar', async (req, res) => {
+    const id = req.params.id;
     try {
+        const user = await User.findById(id);
         res.set('Content-Type', 'image/png');
-        res.send(req.user.avatar);
+        res.send(user.avatar);
     } catch(e) {
         res.status(500).send();
+        console.log(e);
     }
 })
 
