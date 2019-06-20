@@ -3,10 +3,13 @@ require('./db/mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const User = require('./models/user');
+const path = require('path');
 
 const auth = require('./middlewares/auth');
 const port = process.env.PORT || 3001; 
 const app = express();
+
+app.use(express.static(path.join(__dirname, './public')));
 
 app.use(express.json());
 app.use(cors());
@@ -91,6 +94,7 @@ app.post('/users/logout-all', auth, async (req, res) => {
 })
 
 app.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) => {
+    console.log(req.body);
     try {
         req.user.avatar = req.file.buffer;
         await req.user.save();
