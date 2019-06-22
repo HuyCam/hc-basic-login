@@ -31,6 +31,20 @@ const userSchema = mongoose.Schema({
             required: true
         }
     }],
+    conversations: [{
+        conversationID: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true
+        },
+        isRead: {
+            type: Boolean,
+            required: true
+        },
+        receiver: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true
+        }
+    }],
     avatar: {
         type: Buffer
     }
@@ -74,6 +88,6 @@ userSchema.pre('save', async function(next) {
     next();
 });
 
-const User = mongoose.model('user', userSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
