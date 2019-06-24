@@ -32,9 +32,10 @@ const userSchema = mongoose.Schema({
         }
     }],
     conversations: [{
-        conversationID: {
+        conversation: {
             type: mongoose.Schema.Types.ObjectId,
-            required: true
+            required: true,
+            ref: 'Conversation'
         },
         isRead: {
             type: Boolean,
@@ -55,7 +56,7 @@ const userSchema = mongoose.Schema({
 userSchema.methods.generateToken = async function() {
     const user = this;
 
-    const token = await jwt.sign({ _id: user.id.toString() }, 'huyawesomeapp', { expiresIn: '300 seconds'});
+    const token = await jwt.sign({ _id: user.id.toString() }, process.env.JWT_SECRET, { expiresIn: '300 seconds'});
     user.tokens.push({token});
 
     await user.save();

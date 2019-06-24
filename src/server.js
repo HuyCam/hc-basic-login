@@ -10,7 +10,7 @@ const http = require('http');
 const UserRouter = require('./routes/user');
 const ConversationRouter = require('./routes/conversation');
 
-const port = process.env.PORT || 3001; 
+
 const app = express();
 
 const server = http.createServer(app);
@@ -48,20 +48,18 @@ io.on('connection', (socket) => {
     })
 })
 
-server.listen(port, () => {
-    console.log(`Server is live at port ${port}`);
-});
+module.exports = server;
 
 
 /* testing purpose */
-const Conversation = require('./models/conversation');
+// const Conversation = require('./models/conversation');
 
-const myFunc = async() => {
-    const con = await Conversation.findById("5d0ea2128bdb7455443cc3b2");
+// const myFunc = async() => {
+//     const con = await Conversation.findById("5d0ea2128bdb7455443cc3b2");
 
-    await con.populate('owners').execPopulate();
+//     await con.populate('owners').execPopulate();
 
-    console.log(con);
-}
+//     console.log(con);
+// }
 
-myFunc();
+// myFunc();

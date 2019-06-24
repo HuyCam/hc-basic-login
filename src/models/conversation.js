@@ -23,12 +23,25 @@ const conversationSchema = mongoose.Schema({
             if (val.length < 2) {
                 throw new Error("Owners array can not be empty or less than 1");
             }
-        }
+        },
+        unique: true
     } 
 }, {
     timestamps: true
 })
 
-const Conversation = mongoose.model('conversation', conversationSchema);
+conversationSchema.methods.toJSON = function() {
+    const conversation = this;
+
+    // convert conversation to object so we can use delete operator
+    const conObj = conversation.toObject();
+
+    // delete some fields that are not useful
+    delete conObj.createdAt;
+
+    return conObj;
+}
+
+const Conversation = mongoose.model('Conversation', conversationSchema);
 
 module.exports = Conversation;
