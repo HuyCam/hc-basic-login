@@ -6,59 +6,70 @@ const { setupDatabase, userOne, userOneId, userTwo, userTwoId, userThree, userTh
 
 beforeEach(setupDatabase);
 
-// test('Should init a new conversation and add new dialog to that conversation', async() => {
-//     const { body } = await request(server).post('/new/conversations').send({
-//         dialogs: [
-//             {
-//                 senderID: userOneId.toString(),
-//                 content: 'Hello'
-//             }
-//         ],
-//         owners: [userOneId.toString(), userTwoId.toString()]
-//     }).expect(201);
+test('Should init a new conversation', async() => {
+    // create a conversation between user one and user two
+    const { body } = await request(server)
+                    .post(`/new/conversations/${userTwoId.toHexString()}`)
+                    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+                    .send({
+                        content: 'Hello'
+                    })
+                    .expect(201);
 
-//     // Assert that a conversation should be in database
-//     const conversation = await Conversation.findById(body._id);
-//     const { owners, dialogs} = conversation;
+    // check if the response body already include content hello and two owner
+    expect(body).toMatchObject({
+        dialogs: [{
+            content: 'Hello'
+        }],
+        owners: [userOneId.toString(), userTwoId.toString()]
+    })   
+    
+    // check if this conversation should be in the database
+    const conversation = await Conversation.findById(body._id);
+    expect(conversation).not.toBeNull();
+})
 
-//     expect(conversation).not.toBeNull();
+test('Should NOT be able to init a message if receiver is not valid', async() => {
+    const sampleID = new mongoose.Types.ObjectId();
+    const { body } = await request(server)
+                    .post(`/new/conversations/${sampleID}`)
+                    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+                    .send({
+                        content: 'Hello'
+                    })
+                    .expect(400);
 
-//     // Assert that response body should match this
-//     expect(body).toMatchObject({
-//         owners: [
-//             owners[0].toString(), owners[1].toString()
-//         ],
-//         dialogs: [
-//             {
-//                 senderID: dialogs[0].senderID.toString(),
-//                 content: dialogs[0].content,
-//             }
-//         ]
-//     });
+    expect(body).toMatchObject({
+        error : "Invalid receiver"
+    })
+})
 
-//     // send an update for current conversation
-//     const { body2 } = await request(server)
-//             .patch('/send-message/conversations/' + conversationID.toString())
-//             .send({
-//                 content: {
-//                     senderID: userTwo,
-//                     content: "Oh Hello there! How are you?"
-//                 }
-//             }).expect(200);
+test('Should NOT be able to send message if user is not in the conversation', async () => {
+    const { body } = await request(server)
+                    .patch(`/send-message/conversations/${conversationOneId}`)
+                    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+                    .send({
+                        content: 'Hi, how are you?'
+                    })
+                    .expect(400);
+    
+    expect(body).toMatchObject({
+        error: "user is not in this conversation"
+    })
+})
 
-//     // Assert that a new content has been added to current conversation
-//     const conversation2 = await Conversation.findById(body._id);
-//     expect(conversation2.dialogs.length).toBe(2);
-// })
+test('Should be able to send message', async () => {
+    const { body } = await request(server)
+                    .patch(`/send-message/conversations/${conversationOneId}`)
+                    .set('Authorization', `Bearer ${userThree.tokens[0].token}`)
+                    .send({
+                        content: 'Hi, how are you?'
+                    })
+                    .expect(200);
 
-// test('Should NOT be able to update conversation if user is not owner of the conversation', async() => {
-//     await request(server)
-//     .patch('/send-message/conversations/' + conversationOneId.toString())
-//     .send({
-//         content: {
-//             senderID: userOne.toString(),
-//             content: "Oh Hello there! How are you?"
-//         }
-//     }).expect(400);
-// })
+    // Assert that a new dialog is added in the conversation
+    expect(body.dialogs[1]).toMatchObject({
+         content: 'Hi, how are you?'
+    })
+})
 

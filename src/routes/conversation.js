@@ -12,22 +12,15 @@ const isValidUser = async (userID) => {
     if (!user) {
         return false;
     }
-
     return true;
 }
 
-/*Check if this conversation is valid
- conversation is only valid if
- receiverID is valid
-*/
-
-// create a new conversations between 2 persons.
 /*
+create a new conversations between 2 persons.
 incoming request body should be in this format
 {
     content: 'something to say'
 }
-
 */
 router.post('/new/conversations/:receiverID', auth, async (req, res) => {
     try {
@@ -37,7 +30,7 @@ router.post('/new/conversations/:receiverID', auth, async (req, res) => {
 
         const isValid = await isValidUser(receiverID);
         if (!isValid) {
-            return res.status(400).send({ error : "Invalid receiver"});
+            return res.status(400).send({ error : "Invalid receiver" });
         }
 
         // create new conversation
@@ -93,7 +86,7 @@ router.patch('/send-message/conversations/:conversationID', auth, async (req, re
         // check if the sender is the owner of the conversation
         const result = conversation.owners.find(owner => owner.toString() === senderID.toString());
         if (!result) {
-            return res.status(400).send({ error: "user is not in this conversation"});
+            return res.status(400).send({ error: "user is not in this conversation" });
         }
 
         // add a new dialog to this conversations

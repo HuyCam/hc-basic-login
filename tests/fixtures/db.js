@@ -39,7 +39,8 @@ const userThree = {
 
 // set up conversation between user two and three
 const conversationOneId = new mongoose.Types.ObjectId();
-const conversationOne = {  
+const conversationOne = {
+    _id: conversationOneId,  
     dialogs: [
         {
             senderID: userTwoId.toString(),

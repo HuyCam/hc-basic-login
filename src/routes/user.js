@@ -20,7 +20,6 @@ const upload = multer({
 })
 
 /* functions get only info that client can use*/
-
 function customUser(user) {
     return {
             name: user.name,
@@ -34,6 +33,25 @@ router.get('/users/me', auth, (req ,res) => {
 
     res.send(customUser(req.user));
 });
+
+// find a user by email. The query should be just include ?email=
+router.get('/find/users', auth, async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.query.email });
+
+        if (!user) {
+            return res.status(404).send();
+        }
+
+        res.send({ 
+            name: user.name,
+            email: user.email,
+            _id: user._id
+        })
+    } catch(e) {
+        res.status(500).send();
+    }
+})
 
 // create user
 router.post('/users', async (req, res) => {
@@ -85,7 +103,7 @@ router.post('/users/logout-all', auth, async (req, res) => {
         res.status(400).send();
     }
 })
-
+// avatar relate route
 router.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) => {
     try {
         req.user.avatar = req.file.buffer;
