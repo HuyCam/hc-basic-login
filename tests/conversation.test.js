@@ -2,7 +2,7 @@ const request = require('supertest');
 const server = require('../src/server');
 const Conversation = require('../src/models/conversation');
 const mongoose = require('mongoose');
-const { setupDatabase, userOne, userOneId, userTwo, userTwoId, userThree, userThreeId, conversationOne, conversationOneId } = require('./fixtures/db');
+const { setupDatabase, userOne, userOneId, userTwoId, userThree, conversationOne, conversationOneId } = require('./fixtures/db');
 
 beforeEach(setupDatabase);
 
@@ -73,3 +73,25 @@ test('Should be able to send message', async () => {
     })
 })
 
+test('Should get a conversation', async () => {
+    const { body } = await request(server)
+                    .get(`/conversations/${conversationOneId}`)
+                    .set('Authorization', `Bearer ${userThree.tokens[0].token}`)
+                    .send()
+                    .expect(200);
+
+    // Assert that body should content dialog of that conversation
+    expect(body).toMatchObject({
+        _id: conversationOneId.toString(),
+        dialogs: conversationOne.dialogs,
+        owners: conversationOne.owners
+    })
+})
+
+test('Should NOT get a conversation if user does not own it', async () => {
+    const { body } = await request(server)
+                    .get(`/conversations/${conversationOneId}`)
+                    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+                    .send()
+                    .expect(401);
+})

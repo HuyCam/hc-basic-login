@@ -15,6 +15,28 @@ const isValidUser = async (userID) => {
     return true;
 }
 
+// get a conversation
+router.get('/conversations/:id', auth, async (req, res) => {
+    try {
+        const conversation = await Conversation.findById(req.params.id);
+
+        if (!conversation) {
+            return res.status(404).send();
+        }
+
+        // check if this user own that conversation
+        const userID = req.user._id;
+        const result = conversation.owners.find(owner => owner.toString() === userID.toString());
+
+        if (!result) {
+            return res.status(401).send();
+        }
+        res.send(conversation);
+    } catch(e) {
+        res.status(400).send()
+    }
+})
+
 /*
 create a new conversations between 2 persons.
 incoming request body should be in this format

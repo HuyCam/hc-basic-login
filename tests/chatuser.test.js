@@ -1,7 +1,7 @@
 const request = require('supertest');
 const server = require('../src/server');
 const User = require('../src/models/user');
-const { setupDatabase, userOne, userOneId } = require('./fixtures/db');
+const { setupDatabase, userOne, userOneId, userTwo, userTwoId } = require('./fixtures/db');
 
 beforeEach(setupDatabase);
 
@@ -87,3 +87,17 @@ test('Should be able to log out current user', async () => {
     expect(token).toBe(undefined);
 })
 
+test('Should get a user', async () => {
+    const { body } = await request(server)
+                    .get(`/find/users/?email=${userTwo.email}`)
+                    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+                    .send()
+                    .expect(200);
+
+    // Assert that the body is include info that we need
+    expect(body).toMatchObject({
+        name: userTwo.name,
+        email: userTwo.email,
+        _id: userTwoId.toString()
+    })
+})

@@ -138,6 +138,4 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
     }
 })
 
-
-
 module.exports = router;
