@@ -23,8 +23,7 @@ const conversationSchema = mongoose.Schema({
             if (val.length < 2) {
                 throw new Error("Owners array can not be empty or less than 1");
             }
-        },
-        unique: true
+        }
     } 
 }, {
     timestamps: true

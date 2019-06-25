@@ -40,10 +40,6 @@ const userSchema = mongoose.Schema({
         isRead: {
             type: Boolean,
             required: true
-        },
-        receiver: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true
         }
     }],
     avatar: {

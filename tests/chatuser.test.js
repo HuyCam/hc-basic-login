@@ -86,3 +86,4 @@ test('Should be able to log out current user', async () => {
 
     expect(token).toBe(undefined);
 })
+

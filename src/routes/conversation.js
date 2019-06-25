@@ -1,7 +1,9 @@
 const express = require('express');
 const router = new express.Router();
 const Conversation = require('../models/conversation');
+const auth = require('../middlewares/auth');
 const User = require('../models/user');
+const mongoose = require('mongoose');
 
 // check if this user is a valid user
 const isValidUser = async (userID) => {
@@ -16,55 +18,56 @@ const isValidUser = async (userID) => {
 
 /*Check if this conversation is valid
  conversation is only valid if
- 1. senderID is one of the owners
- 2. senderID is a valid user
- 3. receiverID is a valid user
+ receiverID is valid
 */
-const checkValidConversation = async (senderID, owners) => {
-    // check if sender is one of the owners
-    const user = owners.find(owner => owner.toString() === senderID.toString());
-
-    if (!user) {
-        throw new Error({error: "Sender is not in this conversation"});
-    }
-    
-    // check if receiver and sender is valid user
-    const receiverID = owners.find(owner => owner.toString() !== senderID.toString());
-    if (!isValidUser(receiverID)) {
-        throw new Error({ error: "Invalid receiver" })
-    }
-
-    if (!isValidUser(senderID)) {
-        throw new Error({ error: "Invalid sender" })
-    }
-
-    // if everything is passed return this format object to process
-    return {
-        receiverID,
-        senderID
-    }
-}
 
 // create a new conversations between 2 persons.
-router.post('/new/conversations', async (req, res) => {
+/*
+incoming request body should be in this format
+{
+    content: 'something to say'
+}
+
+*/
+router.post('/new/conversations/:receiverID', auth, async (req, res) => {
     try {
-        const conversation = new Conversation(req.body);
+        const senderID = new mongoose.Types.ObjectId(req.user._id.toString());
+        // check valid receiver
+        const receiverID = new mongoose.Types.ObjectId(req.params.receiverID);
 
-        // check if this conversation is valid
-        const { receiverID, senderID } = await checkValidConversation(conversation.dialogs[0].senderID, conversation.owners);
-        const user = await User.findById(senderID);
+        const isValid = await isValidUser(receiverID);
+        if (!isValid) {
+            return res.status(400).send({ error : "Invalid receiver"});
+        }
 
-        // add this conversation to existing user
-        user.conversations.push({
+        // create new conversation
+        const conversation = new Conversation({
+            dialogs: [{
+                senderID: senderID,
+                content: req.body.content
+            }],
+            owners: [ senderID, receiverID ]
+        })
+        await conversation.save();
+
+        // push new conversation data info to receiver and sender
+        const receiver = await User.findById(receiverID);
+        const sender = await User.findById(senderID);
+
+        receiver.conversations.push({
             conversation: conversation._id,
-            isRead: true,
-            receiver: receiverID
+            isRead: false
         })
 
-        await conversation.save();
-        await user.save();
+        sender.conversations.push({
+            conversation: conversation._id,
+            isRead: true
+        })
 
-        res.send(conversation);
+        await receiver.save();
+        await sender.save();
+        
+        res.status(201).send(conversation);
     } catch(e) {
         console.log(e);
         res.status(400).send(e);
@@ -72,19 +75,29 @@ router.post('/new/conversations', async (req, res) => {
 })
 
 // add new dialog to an existing conversation
-router.patch('/add-dialog/conversations/:id', async (req, res) => {
+router.patch('/send-message/conversations/:conversationID', auth, async (req, res) => {
     /* request body should be like this
-    "content": {
-        "senderID": id,
+    {
         "content": "something"
     }
     */
-   const content = req.body.content;
-   const conversationID = req.params.id;
     try {
-        let conversation = await Conversation.findById(conversationID);
+        // add senderID to request body
+        const senderID = new mongoose.Types.ObjectId(req.user._id);
+        req.body.senderID = senderID;
 
-        conversation.dialogs.push(content);
+        // get conversation
+        const conversationID = req.params.conversationID;
+        const conversation = await Conversation.findById(conversationID);
+       
+        // check if the sender is the owner of the conversation
+        const result = conversation.owners.find(owner => owner.toString() === senderID.toString());
+        if (!result) {
+            return res.status(400).send({ error: "user is not in this conversation"});
+        }
+
+        // add a new dialog to this conversations
+        conversation.dialogs.push(req.body);
         await conversation.save();
 
         res.send(conversation);

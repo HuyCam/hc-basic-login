@@ -46,7 +46,6 @@ router.post('/users', async (req, res) => {
         const aUser = customUser(user);
         res.status(201).send({ aUser, token });
     } catch(e) {
-        console.log(e);
         res.status(400).send(e);
     }
 });
@@ -88,7 +87,6 @@ router.post('/users/logout-all', auth, async (req, res) => {
 })
 
 router.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) => {
-    console.log(req.body);
     try {
         req.user.avatar = req.file.buffer;
         await req.user.save();
@@ -108,7 +106,6 @@ router.get('/users/:id/avatar', async (req, res) => {
         res.send(user.avatar);
     } catch(e) {
         res.status(500).send();
-        console.log(e);
     }
 })
 
@@ -119,7 +116,7 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
 
         res.send({msg: 'Delete user avatar successfully'})
     } catch(e) {
-
+        res.status(400).send();
     }
 })
 
