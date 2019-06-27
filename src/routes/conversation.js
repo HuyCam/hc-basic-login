@@ -64,23 +64,6 @@ router.post('/new/conversations/:receiverID', auth, async (req, res) => {
             owners: [ senderID, receiverID ]
         })
         await conversation.save();
-
-        // push new conversation data info to receiver and sender
-        const receiver = await User.findById(receiverID);
-        const sender = await User.findById(senderID);
-
-        receiver.conversations.push({
-            conversation: conversation._id,
-            isRead: false
-        })
-
-        sender.conversations.push({
-            conversation: conversation._id,
-            isRead: true
-        })
-
-        await receiver.save();
-        await sender.save();
         
         res.status(201).send(conversation);
     } catch(e) {

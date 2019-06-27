@@ -18,16 +18,6 @@ const upload = multer({
         cb(undefined, true);
     }
 })
-
-/* functions get only info that client can use*/
-function customUser(user) {
-    return {
-            name: user.name,
-            email: user.email,
-            _id: user._id
-        }
-}
-
 // get your profile
 router.get('/users/me', auth, (req ,res) => {
 
@@ -61,8 +51,8 @@ router.post('/users', async (req, res) => {
         await user.save();
 
         // create a replicate of a newly created user without a password field
-        const aUser = customUser(user);
-        res.status(201).send({ aUser, token });
+        const aUser = await user.toJSON();
+        res.status(201).send({ user: aUser, token });
     } catch(e) {
         res.status(400).send(e);
     }
@@ -74,8 +64,8 @@ router.post('/users/login', async (req, res) => {
         const user = await User.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateToken(user.id.toString());
 
-        const aUser = customUser(user);
-        res.send({ aUser, token});
+        const aUser = await user.toJSON();
+        res.send({ user: aUser, token });
     } catch(e) {
         res.status(400).send(e);
     }

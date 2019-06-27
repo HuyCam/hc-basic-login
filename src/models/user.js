@@ -12,6 +12,7 @@ const userSchema = mongoose.Schema({
     email: {
         type: String,
         required: true,
+        lowercase: true,
         trim: true,
         unique: true,
         validate(val) {
@@ -34,12 +35,16 @@ const userSchema = mongoose.Schema({
     conversations: [{
         conversation: {
             type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'Conversation'
+            required: true
         },
         isRead: {
             type: Boolean,
             required: true
+        },
+        receiver: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: 'User'
         }
     }],
     avatar: {
@@ -84,6 +89,26 @@ userSchema.pre('save', async function(next) {
 
     next();
 });
+
+userSchema.methods.toJSON = async function() {
+    const user = this;
+    await user.populate('conversations.receiver').execPopulate();
+    const userObject = user.toObject();
+
+    delete userObject.password;
+    delete userObject.tokens;
+
+    // delete some information in populated conversations
+    userObject.conversations.forEach(con => {
+        delete con.receiver.password;
+        delete con.receiver.tokens;
+        delete con.receiver.conversations;
+        delete con.receiver.createdAt;
+        delete con.receiver.updatedAt;
+    })
+    return userObject;
+
+}
 
 const User = mongoose.model('User', userSchema);
 

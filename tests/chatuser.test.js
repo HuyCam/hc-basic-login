@@ -1,7 +1,7 @@
 const request = require('supertest');
 const server = require('../src/server');
 const User = require('../src/models/user');
-const { setupDatabase, userOne, userOneId, userTwo, userTwoId } = require('./fixtures/db');
+const { setupDatabase, userOne, userOneId, userTwo, userTwoId, userThree, userThreeId } = require('./fixtures/db');
 
 beforeEach(setupDatabase);
 
@@ -13,11 +13,11 @@ test('Should sign up a new user', async () => {
     }).expect(201);
 
     // Assert that the database was changed correctly
-    const user = await User.findById(response.body.aUser._id);
+    const user = await User.findById(response.body.user._id);
     expect(user).not.toBeNull();
 
     expect(response.body).toMatchObject({
-        aUser: {
+        user: {
             name: 'Huy Cam',
             email: 'camghuy@gmail.com'
         },
@@ -48,15 +48,24 @@ test('Should NOT be able to register a incorrect format of user', async () => {
     }).expect(400);
 })
 
-test('Should login existing user', async () => {
+test('Should login existing user and include existing conversations', async () => {
     const { body } = await request(server).post('/users/login').send({
-        email: userOne.email,
-        password: userOne.password
+        email: userTwo.email,
+        password: userTwo.password
     }).expect(200);
 
     // Assert that token got send back match the token in the user data
-    const user = await User.findById(userOneId);
+    const user = await User.findById(userTwoId);
     expect(body.token).toBe(user.tokens[user.tokens.length - 1].token);
+
+    // Assert that user got send back in clude existing conversation
+    expect(body.user.conversations[0]).toMatchObject({
+        receiver: {
+            _id: userThreeId.toString(),
+            name: userThree.name,
+            email: userThree.email
+        }
+    })
 })
 
 test('Should not login nonexistent user', async () => {

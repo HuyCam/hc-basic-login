@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const User = require('./user');
 
 const conversationSchema = mongoose.Schema({
     dialogs : [new mongoose.Schema({
@@ -37,9 +38,36 @@ conversationSchema.methods.toJSON = function() {
 
     // delete some fields that are not useful
     delete conObj.createdAt;
-
     return conObj;
 }
+
+conversationSchema.pre('save', async function(next) {
+    const conversation = this;
+
+    // if this conversation is new, then push a new conversation info to user
+    if(conversation.isNew) {
+        const [ senderID, receiverID ] = conversation.owners;
+        // push new conversation data info to receiver and sender
+        const receiver = await User.findById(receiverID);
+        const sender = await User.findById(senderID);
+
+        receiver.conversations.push({
+            conversation: conversation._id,
+            isRead: false,
+            receiver: senderID
+        })
+
+        sender.conversations.push({
+            conversation: conversation._id,
+            isRead: true,
+            receiver: receiverID
+        })
+
+        await receiver.save();
+        await sender.save();
+    }
+    next();
+}) 
 
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
