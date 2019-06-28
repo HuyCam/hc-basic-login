@@ -20,7 +20,6 @@ const upload = multer({
 })
 // get your profile
 router.get('/users/me', auth, (req ,res) => {
-
     res.send(customUser(req.user));
 });
 
