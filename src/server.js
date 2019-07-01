@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
     res.send('server is live');
 });
 
-const users = [];
+const users = new Map();
 
 /* Data testing purpose*/
 const { loginSimulation } = require('./simulation/simulation');
@@ -43,7 +43,7 @@ const { loginSimulation } = require('./simulation/simulation');
 
 /* this is for simulation purpose. send token to user to bypass authentication */
 app.get('/simulation', (req, res) => {
-    switch(users.length) {
+    switch(users.size) {
         case 0:
             res.send(loginSimulation[0])
             break;
@@ -58,22 +58,28 @@ app.get('/simulation', (req, res) => {
 /* End simulation process*/
 
 io.on('connection', (socket) => {
-    console.log('New WebSocket connection');
-    socket.on('join', () => {
+    // socket.on('join', () => {
         
-        // users.push({
-        //     userID: socket.id,
-        // })
+    //     users.push({
+    //         userID: socket.id,
+    //     })
 
-        // if (users.length > 1) {
-        //     const { userID }  = user[0];
-        //     console.log(userID);
-        //     io.to(`${userID}`).emit('message', 'An other user just join');
-        // }
+    //     if (users.length > 1) {
+    //         const { userID }  = user[0];
+    //         console.log(userID);
+    //         io.to(`${userID}`).emit('message', 'An other user just join');
+    //     }
 
-        // console.log('a user just join',user);
+    //     console.log('a user just join',user);
+    // })
+
+    // when user log in, add user to current online user
+    socket.on('addUser', (userData) => {
+        const { user: userID} = userData;
+        users.set(userID, {
+            socketID: socket.id
+        })
     })
-
     socket.on('message', (body) => {
         console.log(body);
     })
@@ -81,20 +87,17 @@ io.on('connection', (socket) => {
     socket.on('messageAll', (content) => {
         io.emit('message', content);
     })
+
+    socket.on('disconnect', () => {
+        let userID;
+        users.forEach((val, key) => {
+            if (val.socketID === socket.id) {
+                userID = key;
+            }
+        });
+
+        users.delete(userID);
+    })
 })
 
 module.exports = server;
-
-
-/* testing purpose */
-// const Conversation = require('./models/conversation');
-
-// const myFunc = async() => {
-//     const con = await Conversation.findById("5d116bbe96cdd047600a42f9");
-
-//     await con.populate('owners').execPopulate();
-
-//     console.log(con);
-// }
-
-// myFunc();

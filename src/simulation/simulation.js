@@ -19,7 +19,6 @@ const loginSimulation = [
     }
 ]
 
-
 module.exports = {
     loginSimulation
 }

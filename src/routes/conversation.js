@@ -15,24 +15,18 @@ const isValidUser = async (userID) => {
     return true;
 }
 
-// get a conversation
-router.get('/conversations/:id', auth, async (req, res) => {
+// get all conversations of this user.
+router.get('/conversations', auth, async (req, res) => {
     try {
-        const conversation = await Conversation.findById(req.params.id);
+        const conversation = await Conversation.find({ owners: req.user._id});
 
         if (!conversation) {
             return res.status(404).send();
         }
 
-        // check if this user own that conversation
-        const userID = req.user._id;
-        const result = conversation.owners.find(owner => owner.toString() === userID.toString());
-
-        if (!result) {
-            return res.status(401).send();
-        }
         res.send(conversation);
     } catch(e) {
+        console.log(e);
         res.status(400).send()
     }
 })
@@ -106,3 +100,12 @@ router.patch('/send-message/conversations/:conversationID', auth, async (req, re
 })
 
 module.exports = router;
+
+
+// for testing purpose
+// const myFunc = async() => {
+//     const conversation = await Conversation.find({ owners: "5d13eeb6aaad192128ff6548"});
+//     console.log('conversation', conversation);
+// }
+
+// myFunc();

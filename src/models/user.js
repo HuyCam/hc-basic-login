@@ -23,8 +23,7 @@ const userSchema = mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        trim: true
+        required: true
     },
     tokens: [{
         token: {
@@ -97,6 +96,7 @@ userSchema.methods.toJSON = async function() {
 
     delete userObject.password;
     delete userObject.tokens;
+    delete userObject.avatar;
 
     // delete some information in populated conversations
     userObject.conversations.forEach(con => {
@@ -105,6 +105,7 @@ userSchema.methods.toJSON = async function() {
         delete con.receiver.conversations;
         delete con.receiver.createdAt;
         delete con.receiver.updatedAt;
+        delete con.receiver.avatar;
     })
     return userObject;
 
