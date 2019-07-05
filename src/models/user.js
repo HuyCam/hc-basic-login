@@ -66,7 +66,7 @@ userSchema.methods.generateToken = async function() {
 
 userSchema.statics.findByCredentials = async function(email, password) {
     const user = await User.findOne({ email });
-
+    
     if (!user) {
         throw new Error('Invalid login');
     }
@@ -80,7 +80,7 @@ userSchema.statics.findByCredentials = async function(email, password) {
 
 userSchema.pre('save', async function(next) {
     const user = this;
-
+    
     // if user create new password or new user is created
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8);

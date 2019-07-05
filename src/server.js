@@ -58,30 +58,39 @@ app.get('/simulation', (req, res) => {
 /* End simulation process*/
 
 io.on('connection', (socket) => {
-    // socket.on('join', () => {
-        
-    //     users.push({
-    //         userID: socket.id,
-    //     })
-
-    //     if (users.length > 1) {
-    //         const { userID }  = user[0];
-    //         console.log(userID);
-    //         io.to(`${userID}`).emit('message', 'An other user just join');
-    //     }
-
-    //     console.log('a user just join',user);
-    // })
-
     // when user log in, add user to current online user
     socket.on('addUser', (userData) => {
         const { user: userID} = userData;
         users.set(userID, {
             socketID: socket.id
         })
+        
+        console.log('start Map iteration');
+        users.forEach(val => console.log(val));
     })
-    socket.on('message', (body) => {
-        console.log(body);
+    socket.on('message', (body, callback) => {
+        console.log('got message',body);
+
+        /*
+        1. get that user in the user Map
+        2. send message to that user
+        3. If found that user, emit event to that user
+        4. If not found that user, do nothing
+
+        updating database is the responsibility of the user to send AJAX call to server
+        */
+
+        // 1. get that user in the user Map
+        const receiver = users.get(body.receiverID);
+
+        // 2. send message to that user
+        if (receiver) {
+            io.to(receiver.socketID).emit('message', body);
+            callback(null,'message has been sent to receiver');
+        } else {
+            callback(null, 'User is currently offline. Message is sent to receiver.')
+        }
+        
     })
 
     socket.on('messageAll', (content) => {
