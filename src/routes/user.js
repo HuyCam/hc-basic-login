@@ -4,6 +4,7 @@ const multer = require('multer');
 const auth = require('../middlewares/auth');
 // import models
 const User = require('../models/user');
+const Conversation = require('../models/conversation');
 
 // set up image upload
 const upload = multer({
@@ -19,8 +20,9 @@ const upload = multer({
     }
 })
 // get your profile
-router.get('/users/me', auth, (req ,res) => {
-    res.send(customUser(req.user));
+router.get('/users/me', auth, async (req ,res) => {
+    const user = await req.user.toJSON()
+    res.send({user: user });
 });
 
 // find a user by email. The query should be just include ?email=
@@ -29,7 +31,7 @@ router.get('/find/users', auth, async (req, res) => {
         const user = await User.findOne({ email: req.query.email });
 
         if (!user) {
-            return res.status(404).send();
+            return res.status(404).send({error: 'Not Found'});
         }
 
         res.send({ 
@@ -91,8 +93,55 @@ router.post('/users/logout-all', auth, async (req, res) => {
     } catch(e) {
         res.status(400).send();
     }
+});
+
+// fetch a conversation and receiver
+router.get('/receiver-and-conversation/:conversationID', auth,async(req, res) => {
+    try {
+        const conID = req.params.conversationID;
+
+        const conversations = await Conversation.findById(conID);
+
+        // if there is no such conversation ID
+        if (!conversations) {
+            return res.status(404).send({ error: 'Not found'});
+        }
+
+        const user = await req.user.toJSON();
+        const conMeta = user.conversations.find(val => val.conversation.toString() === conID);
+
+        res.send({ conversationMeta: conMeta, conversations })
+    } catch(e) {
+        res.status(400).send('error');
+    }
+}) 
+// search endpoint
+// query should be like ?email=user@email.com
+router.get('/search', async (req, res) => {
+    const email = req.query.email;
+    try {
+        const user = await User.findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).send({ error: 'Not Found'});
+        }
+
+        // convert user to JSON Object
+        const aUser = await user.toJSON();
+
+        // delete some sensitive data
+        delete aUser.conversations;
+        delete aUser.createdAt;
+        delete aUser.updatedAt;
+
+        res.send({ user: aUser });
+    } catch(e) {
+        res.status(400).send();
+    }
 })
+
 // avatar relate route
+
 router.post('/users/me/avatar', auth, upload.single('avatar') , async (req, res) => {
     try {
         req.user.avatar = req.file.buffer;
@@ -126,5 +175,6 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
         res.status(400).send();
     }
 })
+
 
 module.exports = router;

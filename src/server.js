@@ -50,7 +50,7 @@ app.get('/simulation', (req, res) => {
         case 1:
             res.send(loginSimulation[1]);
             break;
-        case 3:
+        case 2:
             res.send(loginSimulation[2]);
             break;
     }
@@ -69,28 +69,22 @@ io.on('connection', (socket) => {
         users.forEach(val => console.log(val));
     })
     socket.on('message', (body, callback) => {
-        console.log('got message',body);
-
         /*
-        1. get that user in the user Map
-        2. send message to that user
-        3. If found that user, emit event to that user
-        4. If not found that user, do nothing
-
         updating database is the responsibility of the user to send AJAX call to server
         */
 
         // 1. get that user in the user Map
         const receiver = users.get(body.receiverID);
 
-        // 2. send message to that user
+        // 2. send message to that user if found
         if (receiver) {
-            io.to(receiver.socketID).emit('message', body);
+            // if this is not the first message between those two people
+            const messageType = !body.init ? 'message' : 'initMsg';
+            io.to(receiver.socketID).emit(messageType, body);
             callback(null,'message has been sent to receiver');
         } else {
             callback(null, 'User is currently offline. Message is sent to receiver.')
         }
-        
     })
 
     socket.on('messageAll', (content) => {
