@@ -24,12 +24,19 @@ const userTwo = {
     password: '123456',
 }
 
+const userThree = {
+    name: 'David',
+    email: 'david@gmail.com',
+    password: '123456'
+}
+
 const setupDatabase = async () => {
     await User.deleteMany();
     await Conversation.deleteMany();
     //add a user for login
     await new User(userOne).save();
     await new User(userTwo).save();
+    await new User(userThree).save();
 }
 
 setupDatabase().then(res => {
