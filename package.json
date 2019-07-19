@@ -7,7 +7,7 @@
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand",
     "dev": "env-cmd -f ./config/dev.env nodemon src/app.js",
     "reset": "env-cmd -f ./config/dev.env node tests/automate/reset-main-db",
-    "start": "node src/server.js"
+    "start": "node src/app.js"
   },
   "jest": {
     "testEnvironment": "node"
