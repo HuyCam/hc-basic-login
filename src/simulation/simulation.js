@@ -14,7 +14,7 @@ const loginSimulation = [
         password: '123456'
     },
     {
-        email: 'david@gmail.com',
+        email: 'trang@gmail.com',
         password: '123456'
     }
 ]

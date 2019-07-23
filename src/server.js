@@ -61,30 +61,61 @@ io.on('connection', (socket) => {
     // when user log in, add user to current online user
     socket.on('addUser', (userData) => {
         const { user: userID} = userData;
-        users.set(userID, {
-            socketID: socket.id
+        users.set(socket.id, {
+            socketID: socket.id,
+            userID: userID
         })
         
         console.log('start Map iteration');
         users.forEach(val => console.log(val));
     })
-    socket.on('message', (body, callback) => {
-        /*
-        updating database is the responsibility of the user to send AJAX call to server
-        */
+    socket.on('message', async (body, callback) => {
+        
+        // updating database is the responsibility of the user to send AJAX call to server
 
-        // 1. get that user in the user Map
-        const receiver = users.get(body.receiverID);
+        // 1. get all current online receivers in the user Map receivers may be just one person
+        // but is online on multiple device
+        let receivers = [], senders = [];
+
+        // send message to all online receivers (receiver may online on many devices)
+        let newIO = io;
+
+        users.forEach(val => {
+            if (val.userID === body.receiverID) {
+                receivers.push(val);
+            }
+        });
+
+        // get all senders online except the one send the message
+        users.forEach(val => {
+            if (val.userID === body.senderID && val.socketID !== socket.id) {
+                senders.push(val);
+            }
+        })
+
+        // if this is the first message between those two people
+        const messageType = !body.init ? 'message' : 'initMsg';
 
         // 2. send message to that user if found
-        if (receiver) {
-            // if this is not the first message between those two people
-            const messageType = !body.init ? 'message' : 'initMsg';
-            io.to(receiver.socketID).emit(messageType, body);
-            callback(null,'message has been sent to receiver');
-        } else {
-            callback(null, 'User is currently offline. Message is sent to receiver.')
+        if (receivers.length) {
+            
+            receivers.forEach(receiver => {
+                newIO = newIO.to(receiver.socketID);
+            });
         }
+        
+        // make all senders client update their UI and data
+        console.log('sender length', senders.length);
+        console.log('receiver length ', receivers.length);
+        if (senders.length) {
+            senders.forEach(sender => {
+                newIO = newIO.to(sender.socketID);
+            })
+        }
+
+        newIO.emit(messageType, body);
+
+        callback(null,'message has been sent to receiver');
     })
 
     socket.on('messageAll', (content) => {
@@ -99,7 +130,7 @@ io.on('connection', (socket) => {
             }
         });
 
-        users.delete(userID);
+        users.delete(socket.id);
     })
 })
 
